@@ -1,0 +1,112 @@
+/* CompuDo — light mode with palette #e9ecee / #073c81 / #7b8d1c */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Backgrounds — light mode using #e9ecee as base */
+  --bg-base:     #e9ecee;
+  --bg-surface:  #f4f6f8;
+  --bg-elevated: #ffffff;
+  --bg-hover:    #d8dde2;
+
+  /* Borders */
+  --border:        #c0cad3;
+  --border-focus:  #073c81;
+
+  /* Typography */
+  --text-primary:   #1a2b3c;
+  --text-secondary: #4a6078;
+  --text-muted:     #8090a0;
+
+  /* Accents */
+  --accent-violet:        #073c81;
+  --accent-violet-bright: #0d52b5;
+  --accent-gradient:      linear-gradient(135deg, #073c81, #7b8d1c);
+  --accent-emerald: #7b8d1c;
+  --accent-yellow:  #8a9d00;
+  --accent-blue:    #073c81;
+  --accent-red:     #dc2626;
+
+  /* Glassmorphism — white-based in light mode */
+  --glass-bg:     rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(7, 60, 129, 0.14);
+
+  /* shadcn/ui HSL bridge */
+  --background: 210 11% 91%;
+  --foreground: 212 40% 17%;
+  --card: 0 0% 100%;
+  --card-foreground: 212 40% 17%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 212 40% 17%;
+  --primary: 220 88% 27%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 10% 86%;
+  --secondary-foreground: 212 40% 17%;
+  --muted: 210 10% 86%;
+  --muted-foreground: 210 15% 50%;
+  --accent: 210 10% 86%;
+  --accent-foreground: 212 40% 17%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 210 14% 78%;
+  --input: 210 14% 78%;
+  --ring: 220 88% 27%;
+  --radius: 0.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-surface); }
+::-webkit-scrollbar-thumb { background: var(--border-focus); border-radius: 3px; opacity: 0.6; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-violet-bright); }
+
+/* Glassmorphism utility */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+}
+
+/* Gradient text */
+.gradient-text {
+  background-image: linear-gradient(135deg, #073c81, #7b8d1c);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Priority dots */
+.priority-low      { background-color: #7b8d1c; }
+.priority-medium   { background-color: #8a9d00; }
+.priority-high     { background-color: #b45309; }
+.priority-critical { background-color: #dc2626; }
+
+/* AD Directory card animation */
+@keyframes gridMove {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(40px, 40px); }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .animate-grid-move { animation: gridMove 20s linear infinite; }
+}

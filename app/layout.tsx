@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { BoardProvider } from "@/context/BoardContext";
 import { ADProvider } from "@/context/ADContext";
@@ -10,6 +10,12 @@ import { Header } from "@/components/layout/Header";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -24,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${inter.variable} antialiased bg-[--bg-base] text-[--text-primary]`}>
+      <body className={`${inter.variable} ${jakarta.variable} antialiased bg-[--bg-base] text-[--text-primary]`}>
         <NextAuthProvider>
           <ADProvider>
             <BoardProvider>

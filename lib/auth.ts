@@ -34,6 +34,9 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
+  session: {
+    maxAge: 8 * 60 * 60, // 8 hours — one workday
+  },
   pages: {
     signIn: "/auth/signin",
   },

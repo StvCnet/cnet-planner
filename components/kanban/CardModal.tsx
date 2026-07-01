@@ -22,6 +22,8 @@ import { CardAssignees } from "@/components/card-detail/CardAssignees";
 import { CardAttachments } from "@/components/card-detail/CardAttachments";
 import { CardCustomFields } from "@/components/card-detail/CardCustomFields";
 import { useBoard } from "@/hooks/useBoard";
+import { useAD } from "@/hooks/useAD";
+import { notifyTaskAssigned } from "@/lib/webhook";
 import { CardType, Label, Checklist, ADUser, Attachment, CustomField } from "@/types";
 
 interface CardModalProps {
@@ -59,6 +61,7 @@ function SidebarSection({ title, children }: { title: string; children: React.Re
 
 function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }) {
   const { dispatch } = useBoard();
+  const { currentUser } = useAD();
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description ?? "");
   const [editingTitle, setEditingTitle] = useState(false);
@@ -203,7 +206,25 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
         <SidebarSection title="Responsables">
           <CardAssignees
             assignees={card.assignees ?? []}
-            onUpdate={(assignees: ADUser[]) => update({ assignees })}
+            onUpdate={(newAssignees: ADUser[]) => {
+              const prevIds = new Set((card.assignees ?? []).map((a) => a.id));
+              const added = newAssignees.filter((a) => !prevIds.has(a.id));
+              update({ assignees: newAssignees });
+              added.forEach((assignee) =>
+                notifyTaskAssigned({
+                  taskId: card.id,
+                  taskTitle: card.title,
+                  taskDescription: card.description,
+                  dueDate: card.dueDate,
+                  priority: card.priority,
+                  column: card.column,
+                  assigneeName: assignee.displayName,
+                  assigneeEmail: assignee.email,
+                  assignedByName: currentUser?.displayName ?? "Sistema",
+                  assignedByEmail: currentUser?.email ?? "",
+                })
+              );
+            }}
           />
         </SidebarSection>
 

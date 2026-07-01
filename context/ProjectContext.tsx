@@ -6,6 +6,7 @@ import React, {
 import { Project, ADUser, CardType, ColumnType } from "@/types";
 import { useADContext } from "@/context/ADContext";
 import { useBoardContext } from "@/context/BoardContext";
+import { notifyTaskAssigned } from "@/lib/webhook";
 
 const STORAGE_KEY = "cnet-projects-v1";
 
@@ -96,11 +97,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       const project = projects.find((p) => p.id === projectId);
       if (!project) return;
       const now = new Date().toISOString();
+      const cardId = `card-${Date.now()}`;
       dispatch({
         type: "ADD_CARD",
         card: {
           ...task,
-          id: `card-${Date.now()}`,
+          id: cardId,
           projectId,
           assignees: project.members,
           column: "todo" as ColumnType,
@@ -108,6 +110,20 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           updatedAt: now,
         },
       });
+      project.members.forEach((member) =>
+        notifyTaskAssigned({
+          taskId: cardId,
+          taskTitle: task.title,
+          taskDescription: task.description,
+          dueDate: task.dueDate,
+          priority: task.priority,
+          column: "todo",
+          assigneeName: member.displayName,
+          assigneeEmail: member.email,
+          assignedByName: currentUser?.displayName ?? "Admin",
+          assignedByEmail: currentUser?.email ?? "",
+        })
+      );
     },
     [projects, dispatch]
   );

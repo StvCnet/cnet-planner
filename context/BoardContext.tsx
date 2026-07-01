@@ -77,14 +77,20 @@ export function BoardProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const { currentUser } = useADContext();
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount — skip mock data from previous sessions
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const cards: CardType[] = JSON.parse(stored);
-        if (Array.isArray(cards) && cards.length > 0) {
+        // Discard old mock cards (they have mock user assignees with id "u1"..."u20")
+        const isMockData = cards.some((c) =>
+          c.assignees?.some((a) => /^u\d+$/.test(a.id))
+        );
+        if (!isMockData && Array.isArray(cards)) {
           dispatch({ type: "SET_CARDS", cards });
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
         }
       }
     } catch { /* ignore */ }

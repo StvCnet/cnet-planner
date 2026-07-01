@@ -2,6 +2,36 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
+function mapUser(d: any) {
+  return {
+    id: d.id,
+    displayName: d.displayName ?? "",
+    email: d.mail ?? d.userPrincipalName ?? "",
+    department: d.department ?? "",
+    title: d.jobTitle ?? "",
+    phone: d.mobilePhone ?? undefined,
+  };
+}
+
+async function fetchAllUsers(token: string): Promise<any[]> {
+  const results: any[] = [];
+  let url =
+    "https://graph.microsoft.com/v1.0/users" +
+    "?$select=id,displayName,mail,userPrincipalName,department,jobTitle,mobilePhone" +
+    "&$top=999&$orderby=displayName";
+
+  while (url) {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) break;
+    const data = await res.json();
+    results.push(...(data.value ?? []));
+    url = data["@odata.nextLink"] ?? "";
+  }
+  return results;
+}
+
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.accessToken) {
@@ -10,33 +40,21 @@ export async function GET(req: NextRequest) {
 
   const q = req.nextUrl.searchParams.get("q");
 
-  let url: string;
   if (q && q.trim()) {
-    const safe = encodeURIComponent(q.trim());
-    url = `https://graph.microsoft.com/v1.0/users?$filter=startswith(displayName,'${safe}') or startswith(userPrincipalName,'${safe}')&$select=id,displayName,mail,userPrincipalName,department,jobTitle,mobilePhone&$top=20`;
-  } else {
-    url = "https://graph.microsoft.com/v1.0/users?$select=id,displayName,mail,userPrincipalName,department,jobTitle,mobilePhone&$top=100&$orderby=displayName";
+    const safe = q.trim().replace(/'/g, "''");
+    const url =
+      `https://graph.microsoft.com/v1.0/users` +
+      `?$filter=startswith(displayName,'${safe}') or startswith(userPrincipalName,'${safe}')` +
+      `&$select=id,displayName,mail,userPrincipalName,department,jobTitle,mobilePhone&$top=25`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+    });
+    if (!res.ok) return NextResponse.json([]);
+    const data = await res.json();
+    return NextResponse.json((data.value ?? []).map(mapUser));
   }
 
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${session.accessToken}` },
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("Graph API error:", text);
-    return NextResponse.json([], { status: res.status });
-  }
-
-  const data = await res.json();
-  const users = (data.value ?? []).map((d: any) => ({
-    id: d.id,
-    displayName: d.displayName ?? "",
-    email: d.mail ?? d.userPrincipalName ?? "",
-    department: d.department ?? "",
-    title: d.jobTitle ?? "",
-    phone: d.mobilePhone ?? undefined,
-  }));
-
-  return NextResponse.json(users);
+  const all = await fetchAllUsers(session.accessToken);
+  return NextResponse.json(all.map(mapUser));
 }

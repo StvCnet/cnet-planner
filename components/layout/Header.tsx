@@ -4,7 +4,7 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Zap, LogOut } from "lucide-react";
+import { Zap, LogOut, Shield } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
@@ -13,12 +13,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBoard } from "@/hooks/useBoard";
 import { useAD } from "@/hooks/useAD";
+import { useSession } from "next-auth/react";
 import { generateAvatarColor, getInitials } from "@/lib/utils";
 
 export function Header() {
   const { state, setMyTasksFilter } = useBoard();
   const { currentUser } = useAD();
+  const { data: session } = useSession();
   const { myTasksFilter, cards } = state;
+  const isAdmin = session?.isAdmin ?? false;
 
   const myTaskCount = currentUser
     ? cards.filter((c) => c.assignees?.some((a) => a.id === currentUser.id)).length
@@ -115,6 +118,14 @@ export function Header() {
                 <div className="space-y-1 text-xs text-[--text-secondary]">
                   <p className="truncate">{currentUser?.email}</p>
                   <p>{currentUser?.department}</p>
+                  {isAdmin && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                      style={{ background: "var(--accent-violet)", color: "white" }}>
+                      <LogOut className="h-2.5 w-2.5" style={{ display: "none" }} />
+                      <Shield className="h-2.5 w-2.5" />
+                      Administrador
+                    </span>
+                  )}
                 </div>
                 <button
                   onClick={() => signOut({ callbackUrl: "/auth/signin" })}

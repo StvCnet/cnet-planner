@@ -9,7 +9,8 @@ export const authOptions: AuthOptions = {
       tenantId: process.env.AZURE_AD_TENANT_ID!,
       authorization: {
         params: {
-          scope: "openid profile email User.Read User.ReadBasic.All",
+          scope:
+            "openid profile email User.Read User.ReadBasic.All Calendars.Read",
         },
       },
     }),
@@ -23,6 +24,13 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       session.accessToken = token.accessToken as string | undefined;
+      const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      session.isAdmin =
+        adminEmails.length > 0 &&
+        adminEmails.includes((session.user?.email ?? "").toLowerCase());
       return session;
     },
   },

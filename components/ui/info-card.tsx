@@ -1,7 +1,7 @@
 // ProfileCard — animated neumorphic user card for AD directory (light mode)
 "use client";
 
-import { Star, MessageCircle, UserPlus, Shield } from "lucide-react";
+import { Star, Shield, Video, MessageSquare } from "lucide-react";
 import { generateAvatarColor, getInitials } from "@/lib/utils";
 
 export type ProfileCardProps = {
@@ -165,32 +165,40 @@ export function ProfileCard({
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons — Teams deep links */}
       <div className="mt-5 flex gap-2 relative z-10">
-        <button
-          className="flex-1 rounded-full py-3 text-sm font-medium transition-all duration-300 hover:scale-95 active:scale-90"
+        <a
+          href={`https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(email)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 rounded-full py-3 text-sm font-medium transition-all duration-300 hover:scale-95 active:scale-90 flex items-center justify-center gap-1.5"
           style={{
             background: "var(--bg-surface)",
             color: "var(--accent-violet)",
             border: "1px solid var(--border)",
             boxShadow: "3px 3px 8px rgba(0,0,0,0.07), -3px -3px 8px rgba(255,255,255,0.8)",
           }}
-          title="Conectar"
+          title="Chat en Teams"
         >
-          <UserPlus className="mx-auto h-4 w-4" />
-        </button>
-        <button
-          className="flex-1 rounded-full py-3 text-sm font-medium transition-all duration-300 hover:scale-95 active:scale-90"
+          <MessageSquare className="h-4 w-4" />
+          <span className="text-[11px]">Chat</span>
+        </a>
+        <a
+          href={`https://teams.microsoft.com/l/call/0/0?users=${encodeURIComponent(email)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 rounded-full py-3 text-sm font-medium transition-all duration-300 hover:scale-95 active:scale-90 flex items-center justify-center gap-1.5"
           style={{
             background: "var(--bg-surface)",
             color: "var(--accent-emerald)",
             border: "1px solid var(--border)",
             boxShadow: "3px 3px 8px rgba(0,0,0,0.07), -3px -3px 8px rgba(255,255,255,0.8)",
           }}
-          title="Mensaje"
+          title="Llamada en Teams"
         >
-          <MessageCircle className="mx-auto h-4 w-4" />
-        </button>
+          <Video className="h-4 w-4" />
+          <span className="text-[11px]">Llamar</span>
+        </a>
       </div>
 
       {/* Hover border accent */}

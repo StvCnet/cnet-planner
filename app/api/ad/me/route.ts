@@ -13,9 +13,7 @@ export async function GET() {
     { headers: { Authorization: `Bearer ${session.accessToken}` } }
   );
 
-  if (!res.ok) {
-    return NextResponse.json(null, { status: res.status });
-  }
+  if (!res.ok) return NextResponse.json(null, { status: res.status });
 
   const d = await res.json();
   return NextResponse.json({
@@ -25,5 +23,6 @@ export async function GET() {
     department: d.department ?? "",
     title: d.jobTitle ?? "",
     phone: d.mobilePhone ?? undefined,
+    isAdmin: session.isAdmin ?? false,
   });
 }

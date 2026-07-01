@@ -2,6 +2,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
+const ALLOWED_DOMAINS = ["@myallsupport.com", "@grupocnet.com"];
+
+function allowedEmail(email: string): boolean {
+  const e = email.toLowerCase();
+  return ALLOWED_DOMAINS.some((d) => e.endsWith(d));
+}
+
 function mapUser(d: any) {
   return {
     id: d.id,
@@ -52,9 +59,15 @@ export async function GET(req: NextRequest) {
     });
     if (!res.ok) return NextResponse.json([]);
     const data = await res.json();
-    return NextResponse.json((data.value ?? []).map(mapUser));
+    return NextResponse.json(
+      (data.value ?? [])
+        .map(mapUser)
+        .filter((u: ReturnType<typeof mapUser>) => allowedEmail(u.email))
+    );
   }
 
   const all = await fetchAllUsers(session.accessToken);
-  return NextResponse.json(all.map(mapUser));
+  return NextResponse.json(
+    all.map(mapUser).filter((u) => allowedEmail(u.email))
+  );
 }

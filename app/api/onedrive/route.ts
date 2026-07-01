@@ -48,12 +48,15 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: err.error?.message ?? "No se pudo acceder a OneDrive", code: res.status }, { status: res.status });
       }
       const data = await res.json();
-      const drives: OneDrive[] = (data.value ?? []).map((d: any) => ({
-        id: d.id,
-        name: d.name || "Mi OneDrive",
-        driveType: d.driveType,
-        webUrl: d.webUrl ?? "",
-      }));
+      const EXCLUDED = ["personalcachelibrary", "preservation hold library", "site assets"];
+      const drives: OneDrive[] = (data.value ?? [])
+        .filter((d: any) => !EXCLUDED.includes((d.name ?? "").toLowerCase()))
+        .map((d: any) => ({
+          id: d.id,
+          name: d.name || "Mi OneDrive",
+          driveType: d.driveType,
+          webUrl: d.webUrl ?? "",
+        }));
       return NextResponse.json({ drives });
     }
 

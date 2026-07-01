@@ -6,7 +6,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Board } from "@/components/kanban/Board";
 import { CalendarView } from "@/components/views/CalendarView";
 import { DashboardView } from "@/components/views/DashboardView";
-import { DirectoryView } from "@/components/views/DirectoryView";
 import { ProjectsView } from "@/components/views/ProjectsView";
 
 const VIEWS = [
@@ -14,7 +13,6 @@ const VIEWS = [
   { value: "projects",  label: "Proyectos" },
   { value: "calendar",  label: "Calendario" },
   { value: "dashboard", label: "Dashboard" },
-  { value: "directory", label: "Directorio AD" },
 ] as const;
 
 type ViewType = (typeof VIEWS)[number]["value"];
@@ -62,11 +60,6 @@ export function ViewSwitcher() {
           {activeView === "dashboard" && (
             <motion.div key="dashboard" variants={slideVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }} className="h-full">
               <div className="h-full px-4 py-2 overflow-y-auto"><DashboardView /></div>
-            </motion.div>
-          )}
-          {activeView === "directory" && (
-            <motion.div key="directory" variants={slideVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }} className="h-full">
-              <div className="h-full overflow-hidden"><DirectoryView /></div>
             </motion.div>
           )}
         </AnimatePresence>

@@ -10,7 +10,7 @@ export const authOptions: AuthOptions = {
       authorization: {
         params: {
           scope:
-            "openid profile email User.Read User.ReadBasic.All Calendars.Read",
+            "openid profile email User.Read User.ReadBasic.All Calendars.Read Files.Read.All",
         },
       },
     }),

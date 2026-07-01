@@ -31,8 +31,17 @@ export interface Attachment {
   id: string;
   name: string;
   url: string;
-  type: "link" | "file";
+  type: "link" | "file" | "onedrive";
   addedAt: string;
+}
+
+export interface Note {
+  id: string;
+  text: string;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  color: "yellow" | "green" | "blue" | "pink" | "orange" | "purple";
 }
 
 export interface ADUser {
@@ -60,7 +69,8 @@ export interface CardType {
   createdAt: string;
   updatedAt: string;
   priority?: "low" | "medium" | "high" | "critical";
-  projectId?: string; // set when card belongs to a project
+  projectId?: string;
+  notes?: Note[];
 }
 
 export interface Project {

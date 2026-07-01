@@ -20,11 +20,11 @@ import { CardChecklist } from "@/components/card-detail/CardChecklist";
 import { CardDueDate } from "@/components/card-detail/CardDueDate";
 import { CardAssignees } from "@/components/card-detail/CardAssignees";
 import { CardAttachments } from "@/components/card-detail/CardAttachments";
-import { CardCustomFields } from "@/components/card-detail/CardCustomFields";
+import { CardNotes } from "@/components/card-detail/CardNotes";
 import { useBoard } from "@/hooks/useBoard";
 import { useAD } from "@/hooks/useAD";
 import { notifyTaskAssigned } from "@/lib/webhook";
-import { CardType, Label, Checklist, ADUser, Attachment, CustomField } from "@/types";
+import { CardType, Label, Checklist, ADUser, Attachment, Note } from "@/types";
 
 interface CardModalProps {
   card: CardType;
@@ -167,18 +167,7 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
           </div>
         )}
 
-        {/* Custom fields */}
-        {card.customFields && card.customFields.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-[--text-secondary]">Campos personalizados</h4>
-            <CardCustomFields
-              fields={card.customFields}
-              onUpdate={(customFields: CustomField[]) => update({ customFields })}
-            />
-          </div>
-        )}
-
-        {/* Add checklist / custom field buttons if none exist */}
+        {/* Add checklist button if none exist */}
         {(!card.checklists || card.checklists.length === 0) && (
           <CardChecklist
             checklists={[]}
@@ -186,12 +175,14 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
           />
         )}
 
-        {(!card.customFields || card.customFields.length === 0) && (
-          <CardCustomFields
-            fields={[]}
-            onUpdate={(customFields: CustomField[]) => update({ customFields })}
+        {/* Notes — sticky note tracking */}
+        <div className="space-y-2">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-[--text-secondary]">Notas de seguimiento</h4>
+          <CardNotes
+            notes={card.notes ?? []}
+            onUpdate={(notes: Note[]) => update({ notes })}
           />
-        )}
+        </div>
       </div>
 
       {/* Sidebar */}
@@ -260,13 +251,6 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
           <CardAttachments
             attachments={card.attachments ?? []}
             onUpdate={(attachments: Attachment[]) => update({ attachments })}
-          />
-        </SidebarSection>
-
-        <SidebarSection title="Campos personalizados">
-          <CardCustomFields
-            fields={card.customFields ?? []}
-            onUpdate={(customFields: CustomField[]) => update({ customFields })}
           />
         </SidebarSection>
 

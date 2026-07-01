@@ -16,6 +16,7 @@ COPY . .
 # Variables de build (no secretos — solo lo que Next.js necesita en build time)
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+ENV BUILD_STANDALONE=1
 
 RUN npm run build
 

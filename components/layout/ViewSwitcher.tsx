@@ -44,41 +44,31 @@ export function ViewSwitcher() {
 
       <div className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeView}
-            variants={slideVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.15 }}
-            className="h-full"
-          >
-            {activeView === "kanban" && (
-              <div className="h-full overflow-x-auto">
-                <Board />
-              </div>
-            )}
-            {activeView === "projects" && (
-              <div className="h-full overflow-hidden">
-                <ProjectsView />
-              </div>
-            )}
-            {activeView === "calendar" && (
-              <div className="h-full px-4 py-2 overflow-hidden">
-                <CalendarView />
-              </div>
-            )}
-            {activeView === "dashboard" && (
-              <div className="h-full px-4 py-2 overflow-y-auto">
-                <DashboardView />
-              </div>
-            )}
-            {activeView === "directory" && (
-              <div className="h-full overflow-hidden">
-                <DirectoryView />
-              </div>
-            )}
-          </motion.div>
+          {activeView === "kanban" && (
+            <motion.div key="kanban" variants={slideVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }} className="h-full">
+              <div className="h-full overflow-x-auto"><Board /></div>
+            </motion.div>
+          )}
+          {activeView === "projects" && (
+            <motion.div key="projects" variants={slideVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }} className="h-full">
+              <div className="h-full overflow-hidden"><ProjectsView /></div>
+            </motion.div>
+          )}
+          {activeView === "calendar" && (
+            <motion.div key="calendar" variants={slideVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }} className="h-full">
+              <div className="h-full px-4 py-2 overflow-hidden"><CalendarView /></div>
+            </motion.div>
+          )}
+          {activeView === "dashboard" && (
+            <motion.div key="dashboard" variants={slideVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }} className="h-full">
+              <div className="h-full px-4 py-2 overflow-y-auto"><DashboardView /></div>
+            </motion.div>
+          )}
+          {activeView === "directory" && (
+            <motion.div key="directory" variants={slideVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }} className="h-full">
+              <div className="h-full overflow-hidden"><DirectoryView /></div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
     </div>

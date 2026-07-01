@@ -15,13 +15,6 @@ import { CardType } from "@/types";
 import { OutlookEvent } from "@/app/api/calendar/route";
 import { cn } from "@/lib/utils";
 
-const PRIORITY_COLORS: Record<string, string> = {
-  low: "#10B981",
-  medium: "#FBBF24",
-  high: "#F97316",
-  critical: "#EF4444",
-  default: "#7b8d1c",
-};
 
 export function CalendarView() {
   const { state } = useBoard();
@@ -145,8 +138,7 @@ export function CalendarView() {
                       className="flex items-center gap-1 w-full text-left group"
                     >
                       <span
-                        className="h-1.5 w-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: PRIORITY_COLORS[card.priority ?? "default"] }}
+                        className="h-1.5 w-1.5 rounded-full shrink-0 bg-[--accent-emerald]"
                       />
                       <span className="text-[10px] text-[--text-secondary] group-hover:text-[--text-primary] truncate transition-colors">
                         {card.title}

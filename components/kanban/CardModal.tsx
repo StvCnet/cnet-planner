@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { Trash2, Copy } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -85,6 +85,34 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
 
   const handleDelete = () => {
     dispatch({ type: "DELETE_CARD", cardId: card.id });
+    onClose();
+  };
+
+  const handleDuplicate = () => {
+    const now = new Date().toISOString();
+    const newId = `card-${Date.now()}`;
+    const duplicate = {
+      ...card,
+      id: newId,
+      title: `${card.title} (copia)`,
+      createdAt: now,
+      updatedAt: now,
+    };
+    dispatch({ type: "ADD_CARD", card: duplicate });
+    (card.assignees ?? []).forEach((assignee) =>
+      notifyTaskAssigned({
+        taskId: newId,
+        taskTitle: duplicate.title,
+        taskDescription: card.description,
+        dueDate: card.dueDate,
+        priority: card.priority,
+        column: card.column,
+        assigneeName: assignee.displayName,
+        assigneeEmail: assignee.email,
+        assignedByName: currentUser?.displayName ?? "Sistema",
+        assignedByEmail: currentUser?.email ?? "",
+      })
+    );
     onClose();
   };
 
@@ -243,6 +271,16 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
         </SidebarSection>
 
         <Separator />
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={handleDuplicate}
+        >
+          <Copy className="h-4 w-4 mr-2" />
+          Duplicar tarjeta
+        </Button>
 
         <AlertDialog>
           <AlertDialogTrigger asChild>

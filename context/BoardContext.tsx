@@ -1,15 +1,22 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useCallback, useState } from "react";
+import React, {
+  createContext, useContext, useReducer, useCallback,
+  useState, useEffect,
+} from "react";
 import { BoardState, BoardAction, CardType, ColumnType } from "@/types";
 import { DEFAULT_CARDS } from "@/lib/mock-data";
 import { useADContext } from "@/context/ADContext";
 
-const initialReducerState = { cards: DEFAULT_CARDS };
+const STORAGE_KEY = "cnet-cards-v1";
+
 type ReducerState = { cards: CardType[] };
 
 function boardReducer(state: ReducerState, action: BoardAction): ReducerState {
   switch (action.type) {
+    case "SET_CARDS":
+      return { cards: action.cards };
+
     case "ADD_CARD":
       return { ...state, cards: [...state.cards, action.card] };
 
@@ -29,25 +36,25 @@ function boardReducer(state: ReducerState, action: BoardAction): ReducerState {
     case "MOVE_CARD": {
       const card = state.cards.find((c) => c.id === action.cardId);
       if (!card) return state;
-      const withoutCard = state.cards.filter((c) => c.id !== action.cardId);
-      const movedCard: CardType = { ...card, column: action.toColumn, updatedAt: new Date().toISOString() };
-      if (action.beforeId === null) return { ...state, cards: [...withoutCard, movedCard] };
-      const beforeIdx = withoutCard.findIndex((c) => c.id === action.beforeId);
-      const newCards = [...withoutCard];
-      newCards.splice(beforeIdx === -1 ? newCards.length : beforeIdx, 0, movedCard);
-      return { ...state, cards: newCards };
+      const without = state.cards.filter((c) => c.id !== action.cardId);
+      const moved: CardType = { ...card, column: action.toColumn, updatedAt: new Date().toISOString() };
+      if (action.beforeId === null) return { ...state, cards: [...without, moved] };
+      const idx = without.findIndex((c) => c.id === action.beforeId);
+      const next = [...without];
+      next.splice(idx === -1 ? next.length : idx, 0, moved);
+      return { ...state, cards: next };
     }
 
     case "REORDER_CARD": {
       const card = state.cards.find((c) => c.id === action.cardId);
       if (!card) return state;
-      const withoutCard = state.cards.filter((c) => c.id !== action.cardId);
-      const updatedCard: CardType = { ...card, column: action.column, updatedAt: new Date().toISOString() };
-      if (action.beforeId === null) return { ...state, cards: [...withoutCard, updatedCard] };
-      const beforeIdx = withoutCard.findIndex((c) => c.id === action.beforeId);
-      const newCards = [...withoutCard];
-      newCards.splice(beforeIdx === -1 ? newCards.length : beforeIdx, 0, updatedCard);
-      return { ...state, cards: newCards };
+      const without = state.cards.filter((c) => c.id !== action.cardId);
+      const updated: CardType = { ...card, column: action.column, updatedAt: new Date().toISOString() };
+      if (action.beforeId === null) return { ...state, cards: [...without, updated] };
+      const idx = without.findIndex((c) => c.id === action.beforeId);
+      const next = [...without];
+      next.splice(idx === -1 ? next.length : idx, 0, updated);
+      return { ...state, cards: next };
     }
 
     default:
@@ -59,15 +66,36 @@ interface BoardContextValue {
   state: BoardState;
   dispatch: React.Dispatch<BoardAction>;
   setMyTasksFilter: (val: boolean) => void;
-  filteredCards: (column: ColumnType) => CardType[];
+  filteredCards: (column: ColumnType, projectMemberIds?: Set<string>) => CardType[];
 }
 
 const BoardContext = createContext<BoardContextValue | null>(null);
 
 export function BoardProvider({ children }: { children: React.ReactNode }) {
-  const [reducerState, dispatch] = useReducer(boardReducer, initialReducerState);
+  const [reducerState, dispatch] = useReducer(boardReducer, { cards: DEFAULT_CARDS });
   const [myTasksFilter, setMyTasksFilter] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const { currentUser } = useADContext();
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const cards: CardType[] = JSON.parse(stored);
+        if (Array.isArray(cards) && cards.length > 0) {
+          dispatch({ type: "SET_CARDS", cards });
+        }
+      }
+    } catch { /* ignore */ }
+    setHydrated(true);
+  }, []);
+
+  // Persist to localStorage on every change (after hydration)
+  useEffect(() => {
+    if (!hydrated) return;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(reducerState.cards));
+  }, [reducerState.cards, hydrated]);
 
   const state: BoardState = {
     cards: reducerState.cards,
@@ -76,9 +104,22 @@ export function BoardProvider({ children }: { children: React.ReactNode }) {
   };
 
   const filteredCards = useCallback(
-    (column: ColumnType): CardType[] => {
+    (column: ColumnType, projectMemberIds?: Set<string>): CardType[] => {
       const columnCards = reducerState.cards.filter((c) => c.column === column);
-      if (!myTasksFilter || !currentUser) return columnCards;
+
+      if (!myTasksFilter || !currentUser) {
+        // For todo column, also show project tasks where user is a member
+        if (column === "todo" && projectMemberIds && currentUser) {
+          return columnCards.filter(
+            (c) =>
+              !c.projectId || // personal task
+              projectMemberIds.has(currentUser.id) || // user is in a project that owns this card
+              c.assignees?.some((a) => a.id === currentUser.id) // explicitly assigned
+          );
+        }
+        return columnCards;
+      }
+
       return columnCards.filter((c) =>
         c.assignees?.some((a) => a.id === currentUser.id)
       );

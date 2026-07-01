@@ -1,18 +1,16 @@
-// Shared TypeScript types for CompuDo — all components import from here
-
 export type ColumnType = "backlog" | "todo" | "doing" | "done";
 
 export interface Label {
   id: string;
   name: string;
-  color: string; // hex
+  color: string;
 }
 
 export interface ChecklistItem {
   id: string;
   text: string;
   completed: boolean;
-  dueDate?: string; // ISO date string
+  dueDate?: string;
 }
 
 export interface Checklist {
@@ -26,7 +24,7 @@ export interface CustomField {
   name: string;
   type: "text" | "number" | "select";
   value: string | number | null;
-  options?: string[]; // for type "select"
+  options?: string[];
 }
 
 export interface Attachment {
@@ -43,7 +41,7 @@ export interface ADUser {
   email: string;
   department: string;
   title: string;
-  avatar?: string; // initials fallback if no URL
+  avatar?: string;
   isAdmin?: boolean;
   phone?: string;
 }
@@ -54,7 +52,7 @@ export interface CardType {
   column: ColumnType;
   description?: string;
   labels?: Label[];
-  dueDate?: string; // ISO date string
+  dueDate?: string;
   checklists?: Checklist[];
   assignees?: ADUser[];
   attachments?: Attachment[];
@@ -62,6 +60,17 @@ export interface CardType {
   createdAt: string;
   updatedAt: string;
   priority?: "low" | "medium" | "high" | "critical";
+  projectId?: string; // set when card belongs to a project
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  createdBy: string;
+  createdAt: string;
+  members: ADUser[];
 }
 
 export type BoardAction =
@@ -69,7 +78,8 @@ export type BoardAction =
   | { type: "ADD_CARD"; card: CardType }
   | { type: "DELETE_CARD"; cardId: string }
   | { type: "UPDATE_CARD"; cardId: string; updates: Partial<CardType> }
-  | { type: "REORDER_CARD"; cardId: string; beforeId: string | null; column: ColumnType };
+  | { type: "REORDER_CARD"; cardId: string; beforeId: string | null; column: ColumnType }
+  | { type: "SET_CARDS"; cards: CardType[] };
 
 export interface BoardState {
   cards: CardType[];

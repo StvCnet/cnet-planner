@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { BoardProvider } from "@/context/BoardContext";
 import { ADProvider } from "@/context/ADContext";
+import { ProjectProvider } from "@/context/ProjectContext";
 import { NextAuthProvider } from "@/components/providers/NextAuthProvider";
 import { Header } from "@/components/layout/Header";
 
@@ -27,10 +28,12 @@ export default function RootLayout({
         <NextAuthProvider>
           <ADProvider>
             <BoardProvider>
-              <div className="flex flex-col h-screen overflow-hidden">
-                <Header />
-                <main className="flex-1 overflow-hidden">{children}</main>
-              </div>
+              <ProjectProvider>
+                <div className="flex flex-col h-screen overflow-hidden">
+                  <Header />
+                  <main className="flex-1 overflow-hidden">{children}</main>
+                </div>
+              </ProjectProvider>
             </BoardProvider>
           </ADProvider>
         </NextAuthProvider>

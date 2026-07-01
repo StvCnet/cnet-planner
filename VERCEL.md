@@ -162,3 +162,7 @@ Nunca se sube al repositorio (está en `.gitignore`).
 
 **Login redirige a `/auth/signin` en loop**
 → `NEXTAUTH_URL` no coincide con la URL real del deploy. Actualiza en Vercel → Settings → Environment Variables.
+
+
+https://n8ntest.istreetlab.com/webhook-test/task-assigned
+https://n8ntest.istreetlab.com/webhook/task-assigned

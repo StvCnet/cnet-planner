@@ -1,4 +1,3 @@
-// View switcher — tabs for Kanban, Calendar, Dashboard, and AD Directory
 "use client";
 
 import React, { useState } from "react";
@@ -8,9 +7,11 @@ import { Board } from "@/components/kanban/Board";
 import { CalendarView } from "@/components/views/CalendarView";
 import { DashboardView } from "@/components/views/DashboardView";
 import { DirectoryView } from "@/components/views/DirectoryView";
+import { ProjectsView } from "@/components/views/ProjectsView";
 
 const VIEWS = [
   { value: "kanban",    label: "Kanban" },
+  { value: "projects",  label: "Proyectos" },
   { value: "calendar",  label: "Calendario" },
   { value: "dashboard", label: "Dashboard" },
   { value: "directory", label: "Directorio AD" },
@@ -55,6 +56,11 @@ export function ViewSwitcher() {
             {activeView === "kanban" && (
               <div className="h-full overflow-x-auto">
                 <Board />
+              </div>
+            )}
+            {activeView === "projects" && (
+              <div className="h-full overflow-hidden">
+                <ProjectsView />
               </div>
             )}
             {activeView === "calendar" && (

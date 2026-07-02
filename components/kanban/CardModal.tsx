@@ -24,6 +24,7 @@ import { CardNotes } from "@/components/card-detail/CardNotes";
 import { useBoard } from "@/hooks/useBoard";
 import { useAD } from "@/hooks/useAD";
 import { notifyTaskAssigned } from "@/lib/webhook";
+import { createNotification } from "@/lib/notifications";
 import { CardType, Label, Checklist, ADUser, Attachment, Note } from "@/types";
 
 interface CardModalProps {
@@ -109,7 +110,7 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
       updatedAt: now,
     };
     dispatch({ type: "ADD_CARD", card: duplicate });
-    (card.assignees ?? []).forEach((assignee) =>
+    (card.assignees ?? []).forEach((assignee) => {
       notifyTaskAssigned({
         taskId: newId,
         taskTitle: duplicate.title,
@@ -121,8 +122,20 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
         assigneeEmail: assignee.email,
         assignedByName: currentUser?.displayName ?? "Sistema",
         assignedByEmail: currentUser?.email ?? "",
-      })
-    );
+      });
+      if (assignee.id !== currentUser?.id) {
+        createNotification({
+          userId: assignee.id,
+          type: "task_assigned",
+          title: "Nueva tarea asignada",
+          body: `${currentUser?.displayName ?? "Alguien"} te asignó "${duplicate.title}"`,
+          cardId: newId,
+          projectId: card.projectId,
+          createdBy: currentUser?.id,
+          createdByName: currentUser?.displayName,
+        });
+      }
+    });
     onClose();
   };
 
@@ -252,7 +265,7 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
               const prevIds = new Set((card.assignees ?? []).map((a) => a.id));
               const added = newAssignees.filter((a) => !prevIds.has(a.id));
               update({ assignees: newAssignees });
-              added.forEach((assignee) =>
+              added.forEach((assignee) => {
                 notifyTaskAssigned({
                   taskId: card.id,
                   taskTitle: card.title,
@@ -264,8 +277,20 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
                   assigneeEmail: assignee.email,
                   assignedByName: currentUser?.displayName ?? "Sistema",
                   assignedByEmail: currentUser?.email ?? "",
-                })
-              );
+                });
+                if (assignee.id !== currentUser?.id) {
+                  createNotification({
+                    userId: assignee.id,
+                    type: "task_assigned",
+                    title: "Nueva tarea asignada",
+                    body: `${currentUser?.displayName ?? "Alguien"} te asignó "${card.title}"`,
+                    cardId: card.id,
+                    projectId: card.projectId,
+                    createdBy: currentUser?.id,
+                    createdByName: currentUser?.displayName,
+                  });
+                }
+              });
             }}
           />
         </SidebarSection>

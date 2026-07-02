@@ -5,6 +5,7 @@ import "./globals.css";
 import { BoardProvider } from "@/context/BoardContext";
 import { ADProvider } from "@/context/ADContext";
 import { ProjectProvider } from "@/context/ProjectContext";
+import { NotificationProvider } from "@/context/NotificationContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { NextAuthProvider } from "@/components/providers/NextAuthProvider";
 import { Header } from "@/components/layout/Header";
@@ -49,14 +50,16 @@ export default function RootLayout({
         <ThemeProvider>
           <NextAuthProvider>
             <ADProvider>
-              <BoardProvider>
-                <ProjectProvider>
-                  <div className="flex flex-col h-screen overflow-hidden">
-                    <Header />
-                    <main className="flex-1 overflow-hidden">{children}</main>
-                  </div>
-                </ProjectProvider>
-              </BoardProvider>
+              <NotificationProvider>
+                <BoardProvider>
+                  <ProjectProvider>
+                    <div className="flex flex-col h-screen overflow-hidden">
+                      <Header />
+                      <main className="flex-1 overflow-hidden">{children}</main>
+                    </div>
+                  </ProjectProvider>
+                </BoardProvider>
+              </NotificationProvider>
             </ADProvider>
           </NextAuthProvider>
         </ThemeProvider>

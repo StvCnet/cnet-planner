@@ -1,4 +1,4 @@
-import { CardType, Project } from "@/types";
+import { CardType, Project, Notification } from "@/types";
 
 // Postgres row (snake_case) <-> app types (camelCase). Kept in one place since
 // both /api/cards and /api/projects route handlers need the same conversion.
@@ -70,5 +70,37 @@ export function projectToRow(project: Partial<Project>): Record<string, unknown>
   if (project.createdAt !== undefined) row.created_at = project.createdAt;
   if (project.members !== undefined) row.members = project.members;
   if (project.durationWeeks !== undefined) row.duration_weeks = project.durationWeeks;
+  return row;
+}
+
+export function notificationFromRow(row: any): Notification {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: row.type,
+    title: row.title,
+    body: row.body ?? "",
+    cardId: row.card_id ?? undefined,
+    projectId: row.project_id ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    createdByName: row.created_by_name ?? undefined,
+    read: row.read ?? false,
+    createdAt: row.created_at,
+  };
+}
+
+export function notificationToRow(n: Partial<Notification>): Record<string, unknown> {
+  const row: Record<string, unknown> = {};
+  if (n.id !== undefined) row.id = n.id;
+  if (n.userId !== undefined) row.user_id = n.userId;
+  if (n.type !== undefined) row.type = n.type;
+  if (n.title !== undefined) row.title = n.title;
+  if (n.body !== undefined) row.body = n.body;
+  if (n.cardId !== undefined) row.card_id = n.cardId;
+  if (n.projectId !== undefined) row.project_id = n.projectId;
+  if (n.createdBy !== undefined) row.created_by = n.createdBy;
+  if (n.createdByName !== undefined) row.created_by_name = n.createdByName;
+  if (n.read !== undefined) row.read = n.read;
+  if (n.createdAt !== undefined) row.created_at = n.createdAt;
   return row;
 }

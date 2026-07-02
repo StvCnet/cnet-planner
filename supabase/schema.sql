@@ -37,6 +37,22 @@ create table if not exists cards (
 create index if not exists cards_column_idx on cards ("column");
 create index if not exists cards_project_id_idx on cards (project_id);
 
+create table if not exists notifications (
+  id text primary key,
+  user_id text not null,
+  type text not null,
+  title text not null,
+  body text,
+  card_id text references cards(id) on delete cascade,
+  project_id text references projects(id) on delete cascade,
+  created_by text,
+  created_by_name text,
+  read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists notifications_user_id_idx on notifications (user_id, created_at desc);
+
 -- No se habilita RLS a proposito: estas tablas solo se leen/escriben desde
 -- las rutas app/api/* del servidor usando la service role key, y todas esas
 -- rutas ya estan protegidas por middleware.ts (sesion de NextAuth requerida).

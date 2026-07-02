@@ -15,6 +15,7 @@ import { useBoard } from "@/hooks/useBoard";
 import { useAD } from "@/hooks/useAD";
 import { useSession } from "next-auth/react";
 import { useTheme } from "@/context/ThemeContext";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 export function Header() {
   const { state, setMyTasksFilter } = useBoard();
@@ -96,6 +97,9 @@ export function Header() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {/* Notifications */}
+          <NotificationBell />
 
           {/* User avatar */}
           <Popover>

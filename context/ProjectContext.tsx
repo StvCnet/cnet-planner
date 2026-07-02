@@ -7,6 +7,7 @@ import { Project, ADUser, CardType, ColumnType } from "@/types";
 import { useADContext } from "@/context/ADContext";
 import { useBoardContext } from "@/context/BoardContext";
 import { notifyTaskAssigned } from "@/lib/webhook";
+import { createNotification } from "@/lib/notifications";
 
 const POLL_INTERVAL_MS = 20000;
 
@@ -38,7 +39,7 @@ async function apiRequest(url: string, method: string, body?: unknown) {
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
-  const { currentUser } = useADContext();
+  const { currentUser, users } = useADContext();
   const { dispatch } = useBoardContext();
 
   const fetchProjects = useCallback(async () => {
@@ -84,9 +85,24 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       };
       setProjects((prev) => [...prev, project]);
       apiRequest("/api/projects", "POST", project);
+      if (!currentUser?.isAdmin) {
+        users
+          .filter((u) => u.isAdmin && u.id !== currentUser?.id)
+          .forEach((admin) =>
+            createNotification({
+              userId: admin.id,
+              type: "project_created",
+              title: "Nuevo proyecto creado",
+              body: `${currentUser?.displayName ?? "Alguien"} creó el proyecto "${name}"`,
+              projectId: project.id,
+              createdBy: currentUser?.id,
+              createdByName: currentUser?.displayName,
+            })
+          );
+      }
       return project;
     },
-    [currentUser]
+    [currentUser, users]
   );
 
   const updateProject = useCallback(
@@ -112,10 +128,21 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         if (!project || project.members.find((m) => m.id === user.id)) return prev;
         const members = [...project.members, user];
         apiRequest(`/api/projects/${projectId}`, "PATCH", { members });
+        if (user.id !== currentUser?.id) {
+          createNotification({
+            userId: user.id,
+            type: "project_invite",
+            title: "Te agregaron a un proyecto",
+            body: `${currentUser?.displayName ?? "Alguien"} te agregó al proyecto "${project.name}"`,
+            projectId: project.id,
+            createdBy: currentUser?.id,
+            createdByName: currentUser?.displayName,
+          });
+        }
         return prev.map((p) => (p.id === projectId ? { ...p, members } : p));
       });
     },
-    []
+    [currentUser]
   );
 
   const removeMember = useCallback(
@@ -152,7 +179,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           updatedAt: now,
         },
       });
-      project.members.forEach((member) =>
+      project.members.forEach((member) => {
         notifyTaskAssigned({
           taskId: cardId,
           taskTitle: task.title,
@@ -164,10 +191,22 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           assigneeEmail: member.email,
           assignedByName: currentUser?.displayName ?? "Admin",
           assignedByEmail: currentUser?.email ?? "",
-        })
-      );
+        });
+        if (member.id !== currentUser?.id) {
+          createNotification({
+            userId: member.id,
+            type: "task_assigned",
+            title: "Nueva tarea asignada",
+            body: `${currentUser?.displayName ?? "Alguien"} te asignó "${task.title}"`,
+            cardId,
+            projectId,
+            createdBy: currentUser?.id,
+            createdByName: currentUser?.displayName,
+          });
+        }
+      });
     },
-    [projects, dispatch]
+    [projects, dispatch, currentUser]
   );
 
   const getProjectsForUser = useCallback(

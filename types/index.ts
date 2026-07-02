@@ -86,6 +86,20 @@ export interface Project {
   durationWeeks?: string;
 }
 
+export interface Notification {
+  id: string;
+  userId: string;
+  type: "task_assigned" | "project_invite" | "project_created";
+  title: string;
+  body: string;
+  cardId?: string;
+  projectId?: string;
+  createdBy?: string;
+  createdByName?: string;
+  read: boolean;
+  createdAt: string;
+}
+
 export type BoardAction =
   | { type: "MOVE_CARD"; cardId: string; toColumn: ColumnType; beforeId: string | null }
   | { type: "ADD_CARD"; card: CardType }

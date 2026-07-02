@@ -71,6 +71,7 @@ export interface CardType {
   priority?: "low" | "medium" | "high" | "critical";
   projectId?: string;
   notes?: Note[];
+  position?: number;
 }
 
 export interface Project {

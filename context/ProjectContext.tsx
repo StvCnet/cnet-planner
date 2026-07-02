@@ -8,7 +8,7 @@ import { useADContext } from "@/context/ADContext";
 import { useBoardContext } from "@/context/BoardContext";
 import { notifyTaskAssigned } from "@/lib/webhook";
 
-const STORAGE_KEY = "cnet-projects-v1";
+const POLL_INTERVAL_MS = 20000;
 
 interface ProjectContextValue {
   projects: Project[];
@@ -23,23 +23,51 @@ interface ProjectContextValue {
 
 const ProjectContext = createContext<ProjectContextValue | null>(null);
 
+async function apiRequest(url: string, method: string, body?: unknown) {
+  try {
+    await fetch(url, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (err) {
+    console.error(`Project sync failed (${method} ${url})`, err);
+  }
+}
+
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const { currentUser } = useADContext();
   const { dispatch } = useBoardContext();
 
-  // Load from localStorage on mount
-  useEffect(() => {
+  const fetchProjects = useCallback(async () => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) setProjects(JSON.parse(stored));
-    } catch { /* ignore */ }
+      const res = await fetch("/api/projects");
+      if (!res.ok) return;
+      const data: Project[] = await res.json();
+      setProjects(data);
+    } catch (err) {
+      console.error("Failed to load projects", err);
+    }
   }, []);
 
-  const persist = useCallback((updated: Project[]) => {
-    setProjects(updated);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-  }, []);
+  // Initial load from the shared backend (replaces the old localStorage hydration).
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
+
+  // Pick up projects/members created or changed by other users.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") fetchProjects();
+    }, POLL_INTERVAL_MS);
+    const onFocus = () => fetchProjects();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [fetchProjects]);
 
   const createProject = useCallback(
     (name: string, description: string, color: string): Project => {
@@ -52,41 +80,45 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         createdAt: new Date().toISOString(),
         members: currentUser ? [currentUser] : [],
       };
-      persist([...projects, project]);
+      setProjects((prev) => [...prev, project]);
+      apiRequest("/api/projects", "POST", project);
       return project;
     },
-    [projects, currentUser, persist]
+    [currentUser]
   );
 
   const deleteProject = useCallback(
-    (id: string) => persist(projects.filter((p) => p.id !== id)),
-    [projects, persist]
+    (id: string) => {
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+      apiRequest(`/api/projects/${id}`, "DELETE");
+    },
+    []
   );
 
   const addMember = useCallback(
     (projectId: string, user: ADUser) => {
-      persist(
-        projects.map((p) =>
-          p.id === projectId && !p.members.find((m) => m.id === user.id)
-            ? { ...p, members: [...p.members, user] }
-            : p
-        )
-      );
+      setProjects((prev) => {
+        const project = prev.find((p) => p.id === projectId);
+        if (!project || project.members.find((m) => m.id === user.id)) return prev;
+        const members = [...project.members, user];
+        apiRequest(`/api/projects/${projectId}`, "PATCH", { members });
+        return prev.map((p) => (p.id === projectId ? { ...p, members } : p));
+      });
     },
-    [projects, persist]
+    []
   );
 
   const removeMember = useCallback(
     (projectId: string, userId: string) => {
-      persist(
-        projects.map((p) =>
-          p.id === projectId
-            ? { ...p, members: p.members.filter((m) => m.id !== userId) }
-            : p
-        )
-      );
+      setProjects((prev) => {
+        const project = prev.find((p) => p.id === projectId);
+        if (!project) return prev;
+        const members = project.members.filter((m) => m.id !== userId);
+        apiRequest(`/api/projects/${projectId}`, "PATCH", { members });
+        return prev.map((p) => (p.id === projectId ? { ...p, members } : p));
+      });
     },
-    [projects, persist]
+    []
   );
 
   const addTask = useCallback(

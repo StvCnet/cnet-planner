@@ -285,13 +285,15 @@ function AddMemberSearch({ project, onAdd, onClose }: {
 }
 
 /* ─── Project Detail ────────────────────────────────────────────────────── */
-function ProjectDetail({ project, isAdmin, onBack }: {
+function ProjectDetail({ project, canManage, onBack }: {
   project: Project;
-  isAdmin: boolean;
+  canManage: boolean;
   onBack: () => void;
 }) {
   const { addMember, removeMember, addTask, updateProject } = useProjects();
   const { state } = useBoard();
+  const { users } = useAD();
+  const creator = users.find((u) => u.id === project.createdBy);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingDuration, setEditingDuration] = useState(false);
@@ -352,12 +354,12 @@ function ProjectDetail({ project, isAdmin, onBack }: {
                 placeholder="Ej. 1-4 semanas"
                 className="w-32 shrink-0 rounded-full border border-[--border] bg-[--bg-surface] px-2 py-0.5 text-[10px] text-[--text-primary] outline-none focus:border-[--border-focus]"
               />
-            ) : (project.durationWeeks || isAdmin) ? (
+            ) : (project.durationWeeks || canManage) ? (
               <button
-                onClick={() => isAdmin && setEditingDuration(true)}
+                onClick={() => canManage && setEditingDuration(true)}
                 className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors"
                 style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}
-                disabled={!isAdmin}
+                disabled={!canManage}
               >
                 {project.durationWeeks || "+ duración"}
               </button>
@@ -366,9 +368,30 @@ function ProjectDetail({ project, isAdmin, onBack }: {
           {project.description && (
             <p className="text-xs text-[--text-muted] truncate">{project.description}</p>
           )}
+          {creator && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <UserAvatar
+                userId={creator.id}
+                name={creator.displayName}
+                className="h-4 w-4"
+                fallbackClassName="text-[7px] font-bold"
+              />
+              <span className="text-[10px] text-[--text-muted]">
+                Creado por {creator.displayName}
+              </span>
+              {creator.isAdmin && (
+                <span
+                  className="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                  style={{ background: "var(--accent-violet)", color: "white" }}
+                >
+                  Admin
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div className="ml-auto flex gap-2">
-          {isAdmin && (
+          {canManage && (
             <button
               onClick={() => setShowAddTask(true)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors"
@@ -455,7 +478,7 @@ function ProjectDetail({ project, isAdmin, onBack }: {
                 Miembros ({project.members.length})
               </h3>
             </div>
-            {isAdmin && (
+            {canManage && (
               <button
                 onClick={() => setShowAddMember(true)}
                 className="flex items-center gap-1 text-xs text-[--accent-violet] hover:underline"
@@ -486,7 +509,7 @@ function ProjectDetail({ project, isAdmin, onBack }: {
                     {member.title || member.department}
                   </p>
                 </div>
-                {isAdmin && member.id !== project.createdBy && (
+                {canManage && member.id !== project.createdBy && (
                   <button
                     onClick={() => removeMember(project.id, member.id)}
                     className="ml-1 text-[--text-muted] hover:text-[--accent-red] transition-colors"
@@ -512,7 +535,7 @@ function ProjectDetail({ project, isAdmin, onBack }: {
             <div className="flex flex-col items-center justify-center py-10 text-[--text-muted]">
               <CheckSquare className="h-10 w-10 mb-3 opacity-20" />
               <p className="text-sm">Sin tareas aún</p>
-              {isAdmin && (
+              {canManage && (
                 <button
                   onClick={() => setShowAddTask(true)}
                   className="mt-3 text-xs text-[--accent-violet] hover:underline"
@@ -606,7 +629,7 @@ function ProjectDetail({ project, isAdmin, onBack }: {
 export function ProjectsView() {
   const { projects, createProject, deleteProject, getProjectsForUser } = useProjects();
   const { data: session } = useSession();
-  const { currentUser } = useAD();
+  const { currentUser, users } = useAD();
   const { state } = useBoard();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -614,6 +637,7 @@ export function ProjectsView() {
 
   const myProjects = currentUser ? getProjectsForUser(currentUser.id) : projects;
   const allProjects = isAdmin ? projects : myProjects;
+  const canManage = (project: Project) => isAdmin || project.createdBy === currentUser?.id;
 
   const taskCount = (projectId: string) =>
     state.cards.filter((c) => c.projectId === projectId).length;
@@ -630,7 +654,7 @@ export function ProjectsView() {
     return (
       <ProjectDetail
         project={currentProject}
-        isAdmin={isAdmin}
+        canManage={canManage(currentProject)}
         onBack={() => setSelectedProject(null)}
       />
     );
@@ -650,7 +674,7 @@ export function ProjectsView() {
             {allProjects.length}
           </span>
         </div>
-        {isAdmin && (
+        {currentUser && (
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-colors"
@@ -668,9 +692,9 @@ export function ProjectsView() {
           <div className="flex flex-col items-center justify-center h-48 text-[--text-muted]">
             <FolderKanban className="h-12 w-12 mb-3 opacity-20" />
             <p className="text-sm">
-              {isAdmin ? "Crea el primer proyecto para tu equipo" : "No tienes proyectos asignados aún"}
+              {isAdmin ? "Crea el primer proyecto para tu equipo" : "Aún no tienes proyectos"}
             </p>
-            {isAdmin && (
+            {currentUser && (
               <button
                 onClick={() => setShowCreate(true)}
                 className="mt-4 text-xs text-[--accent-violet] hover:underline"
@@ -708,8 +732,7 @@ export function ProjectsView() {
                       style={{ backgroundColor: project.color }}
                     />
 
-                    {/* Admin delete */}
-                    {isAdmin && (
+                    {canManage(project) && (
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteProject(project.id); }}
                         className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 text-[--text-muted] hover:text-[--accent-red] transition-all"
@@ -744,6 +767,31 @@ export function ProjectsView() {
                             {project.description}
                           </p>
                         )}
+                        {(() => {
+                          const creator = users.find((u) => u.id === project.createdBy);
+                          if (!creator) return null;
+                          return (
+                            <div className="flex items-center gap-1 mt-1.5">
+                              <UserAvatar
+                                userId={creator.id}
+                                name={creator.displayName}
+                                className="h-4 w-4"
+                                fallbackClassName="text-[7px] font-bold"
+                              />
+                              <span className="text-[9px] text-[--text-muted] truncate">
+                                {creator.displayName}
+                              </span>
+                              {creator.isAdmin && (
+                                <span
+                                  className="text-[8px] font-semibold px-1 py-0.5 rounded-full shrink-0"
+                                  style={{ background: "var(--accent-violet)", color: "white" }}
+                                >
+                                  Admin
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 

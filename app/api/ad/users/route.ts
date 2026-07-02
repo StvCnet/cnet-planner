@@ -4,19 +4,26 @@ import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_DOMAINS = ["@myallsupport.com", "@grupocnet.com"];
 
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+
 function allowedEmail(email: string): boolean {
   const e = email.toLowerCase();
   return ALLOWED_DOMAINS.some((d) => e.endsWith(d));
 }
 
 function mapUser(d: any) {
+  const email = d.mail ?? d.userPrincipalName ?? "";
   return {
     id: d.id,
     displayName: d.displayName ?? "",
-    email: d.mail ?? d.userPrincipalName ?? "",
+    email,
     department: d.department ?? "",
     title: d.jobTitle ?? "",
     phone: d.mobilePhone ?? undefined,
+    isAdmin: ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(email.toLowerCase()),
   };
 }
 

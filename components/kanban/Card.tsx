@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { format, isPast, isToday, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { CardModal } from "@/components/kanban/CardModal";
 import { DropIndicator } from "@/components/kanban/DropIndicator";
@@ -111,22 +111,28 @@ export function Card({ card, handleDragStart }: CardProps) {
           </div>
         )}
 
-        {/* Footer: due date + assignees */}
-        {(dueDateObj || (card.assignees && card.assignees.length > 0)) && (
+        {/* Footer: due date + hours + assignees */}
+        {(dueDateObj || card.estimatedHours !== undefined || (card.assignees && card.assignees.length > 0)) && (
           <div className="flex items-center justify-between pt-0.5">
-            {dueDateObj ? (
-              <span
-                className={cn(
-                  "flex items-center gap-1 text-[11px]",
-                  isOverdue ? "text-[--accent-red]" : isToday(dueDateObj) ? "text-[--accent-yellow]" : "text-[--text-muted]"
-                )}
-              >
-                <CalendarIcon className="h-3 w-3" />
-                {format(dueDateObj, "d MMM", { locale: es })}
-              </span>
-            ) : (
-              <span />
-            )}
+            <span className="flex items-center gap-2">
+              {dueDateObj && (
+                <span
+                  className={cn(
+                    "flex items-center gap-1 text-[11px]",
+                    isOverdue ? "text-[--accent-red]" : isToday(dueDateObj) ? "text-[--accent-yellow]" : "text-[--text-muted]"
+                  )}
+                >
+                  <CalendarIcon className="h-3 w-3" />
+                  {format(dueDateObj, "d MMM", { locale: es })}
+                </span>
+              )}
+              {card.estimatedHours !== undefined && (
+                <span className="flex items-center gap-1 text-[11px] text-[--text-muted]">
+                  <Clock className="h-3 w-3" />
+                  {card.estimatedHours}h
+                </span>
+              )}
+            </span>
 
             {card.assignees && card.assignees.length > 0 && (
               <div className="flex -space-x-1.5">

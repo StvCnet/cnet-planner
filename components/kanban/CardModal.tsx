@@ -65,6 +65,7 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description ?? "");
   const [editingTitle, setEditingTitle] = useState(false);
+  const [hours, setHours] = useState(card.estimatedHours?.toString() ?? "");
 
   const update = (updates: Partial<CardType>) => {
     dispatch({ type: "UPDATE_CARD", cardId: card.id, updates });
@@ -80,6 +81,15 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
   const handleDescriptionBlur = () => {
     if (description !== (card.description ?? "")) {
       update({ description });
+    }
+  };
+
+  const handleHoursBlur = () => {
+    const parsed = hours.trim() === "" ? undefined : Number(hours);
+    const next = parsed !== undefined && !Number.isNaN(parsed) && parsed >= 0 ? parsed : undefined;
+    setHours(next?.toString() ?? "");
+    if (next !== card.estimatedHours) {
+      update({ estimatedHours: next });
     }
   };
 
@@ -220,6 +230,19 @@ function ModalContent({ card, onClose }: { card: CardType; onClose: () => void }
               ))}
             </SelectContent>
           </Select>
+        </SidebarSection>
+
+        <SidebarSection title="Horas estimadas">
+          <input
+            type="number"
+            min={0}
+            step={0.5}
+            value={hours}
+            onChange={(e) => setHours(e.target.value)}
+            onBlur={handleHoursBlur}
+            placeholder="Ej. 4"
+            className="w-full rounded-lg border border-[--border] bg-[--bg-surface] px-3 py-2 text-sm text-[--text-primary] outline-none focus:border-[--border-focus] h-9"
+          />
         </SidebarSection>
 
         <SidebarSection title="Responsables">

@@ -21,6 +21,7 @@ export function cardFromRow(row: any): CardType {
     priority: row.priority ?? undefined,
     projectId: row.project_id ?? undefined,
     position: row.position ?? 0,
+    estimatedHours: row.estimated_hours ?? undefined,
   };
 }
 
@@ -42,6 +43,7 @@ export function cardToRow(card: Partial<CardType>): Record<string, unknown> {
   if (card.priority !== undefined) row.priority = card.priority;
   if (card.projectId !== undefined) row.project_id = card.projectId;
   if (card.position !== undefined) row.position = card.position;
+  if (card.estimatedHours !== undefined) row.estimated_hours = card.estimatedHours;
   return row;
 }
 
@@ -54,6 +56,7 @@ export function projectFromRow(row: any): Project {
     createdBy: row.created_by,
     createdAt: row.created_at,
     members: row.members ?? [],
+    durationWeeks: row.duration_weeks ?? undefined,
   };
 }
 
@@ -66,5 +69,6 @@ export function projectToRow(project: Partial<Project>): Record<string, unknown>
   if (project.createdBy !== undefined) row.created_by = project.createdBy;
   if (project.createdAt !== undefined) row.created_at = project.createdAt;
   if (project.members !== undefined) row.members = project.members;
+  if (project.durationWeeks !== undefined) row.duration_weeks = project.durationWeeks;
   return row;
 }

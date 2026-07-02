@@ -12,7 +12,8 @@ const POLL_INTERVAL_MS = 20000;
 
 interface ProjectContextValue {
   projects: Project[];
-  createProject: (name: string, description: string, color: string) => Project;
+  createProject: (name: string, description: string, color: string, durationWeeks?: string) => Project;
+  updateProject: (id: string, updates: Partial<Project>) => void;
   deleteProject: (id: string) => void;
   addMember: (projectId: string, user: ADUser) => void;
   removeMember: (projectId: string, userId: string) => void;
@@ -70,7 +71,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProjects]);
 
   const createProject = useCallback(
-    (name: string, description: string, color: string): Project => {
+    (name: string, description: string, color: string, durationWeeks?: string): Project => {
       const project: Project = {
         id: `proj-${Date.now()}`,
         name,
@@ -79,12 +80,21 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         createdBy: currentUser?.id ?? "unknown",
         createdAt: new Date().toISOString(),
         members: currentUser ? [currentUser] : [],
+        durationWeeks,
       };
       setProjects((prev) => [...prev, project]);
       apiRequest("/api/projects", "POST", project);
       return project;
     },
     [currentUser]
+  );
+
+  const updateProject = useCallback(
+    (id: string, updates: Partial<Project>) => {
+      setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...updates } : p)));
+      apiRequest(`/api/projects/${id}`, "PATCH", updates);
+    },
+    []
   );
 
   const deleteProject = useCallback(
@@ -175,7 +185,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ProjectContext.Provider value={{
-      projects, createProject, deleteProject,
+      projects, createProject, updateProject, deleteProject,
       addMember, removeMember, addTask,
       getProjectsForUser, projectMemberIds,
     }}>

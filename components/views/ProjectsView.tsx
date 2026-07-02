@@ -11,6 +11,8 @@ import { useProjects } from "@/context/ProjectContext";
 import { useAD } from "@/hooks/useAD";
 import { Project, ADUser, CardType } from "@/types";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { useBoard } from "@/hooks/useBoard";
 
 const PROJECT_COLORS = [
@@ -21,11 +23,12 @@ const PROJECT_COLORS = [
 /* ─── Create Project Modal ──────────────────────────────────────────────── */
 function CreateProjectModal({ onClose, onCreate }: {
   onClose: () => void;
-  onCreate: (name: string, desc: string, color: string) => void;
+  onCreate: (name: string, desc: string, color: string, durationWeeks: string) => void;
 }) {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [color, setColor] = useState(PROJECT_COLORS[0]);
+  const [duration, setDuration] = useState("");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
@@ -65,6 +68,15 @@ function CreateProjectModal({ onClose, onCreate }: {
             />
           </div>
           <div>
+            <label className="text-xs font-medium text-[--text-secondary] mb-1 block">Duración estimada</label>
+            <input
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="Ej. 1-4 semanas"
+              className="w-full rounded-lg border border-[--border] bg-[--bg-surface] px-3 py-2 text-sm text-[--text-primary] outline-none focus:border-[--border-focus]"
+            />
+          </div>
+          <div>
             <label className="text-xs font-medium text-[--text-secondary] mb-2 block">Color</label>
             <div className="flex gap-2 flex-wrap">
               {PROJECT_COLORS.map((c) => (
@@ -90,7 +102,7 @@ function CreateProjectModal({ onClose, onCreate }: {
             Cancelar
           </button>
           <button
-            onClick={() => { if (name.trim()) { onCreate(name.trim(), desc.trim(), color); onClose(); } }}
+            onClick={() => { if (name.trim()) { onCreate(name.trim(), desc.trim(), color, duration.trim()); onClose(); } }}
             disabled={!name.trim()}
             className="flex-1 rounded-lg py-2 text-sm text-white font-medium transition-colors disabled:opacity-40"
             style={{ background: color }}
@@ -278,15 +290,35 @@ function ProjectDetail({ project, isAdmin, onBack }: {
   isAdmin: boolean;
   onBack: () => void;
 }) {
-  const { addMember, removeMember, addTask } = useProjects();
+  const { addMember, removeMember, addTask, updateProject } = useProjects();
   const { state } = useBoard();
   const [showAddMember, setShowAddMember] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
+  const [editingDuration, setEditingDuration] = useState(false);
+  const [duration, setDuration] = useState(project.durationWeeks ?? "");
+
+  const saveDuration = () => {
+    setEditingDuration(false);
+    const trimmed = duration.trim();
+    if (trimmed !== (project.durationWeeks ?? "")) {
+      updateProject(project.id, { durationWeeks: trimmed || undefined });
+    }
+  };
 
   const projectCards = state.cards.filter((c) => c.projectId === project.id);
   const todoCards = projectCards.filter((c) => c.column === "todo");
   const doingCards = projectCards.filter((c) => c.column === "doing");
   const doneCards = projectCards.filter((c) => c.column === "done");
+
+  const completionRate = projectCards.length > 0
+    ? Math.round((doneCards.length / projectCards.length) * 100)
+    : 0;
+
+  const totalHours = projectCards.reduce((sum, c) => sum + (c.estimatedHours ?? 0), 0);
+  const doneHours = doneCards.reduce((sum, c) => sum + (c.estimatedHours ?? 0), 0);
+
+  const checklistItems = projectCards.flatMap((c) => c.checklists?.flatMap((cl) => cl.items) ?? []);
+  const doneChecklistItems = checklistItems.filter((i) => i.completed).length;
 
   const PRIORITY_COLORS: Record<string, string> = {
     low: "#10B981", medium: "#FBBF24", high: "#F97316", critical: "#EF4444",
@@ -308,7 +340,29 @@ function ProjectDetail({ project, isAdmin, onBack }: {
         </button>
         <div className="h-8 w-8 rounded-xl shrink-0" style={{ backgroundColor: project.color }} />
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-[--text-primary] truncate">{project.name}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-[--text-primary] truncate">{project.name}</h2>
+            {editingDuration ? (
+              <input
+                autoFocus
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+                onBlur={saveDuration}
+                onKeyDown={(e) => e.key === "Enter" && saveDuration()}
+                placeholder="Ej. 1-4 semanas"
+                className="w-32 shrink-0 rounded-full border border-[--border] bg-[--bg-surface] px-2 py-0.5 text-[10px] text-[--text-primary] outline-none focus:border-[--border-focus]"
+              />
+            ) : (project.durationWeeks || isAdmin) ? (
+              <button
+                onClick={() => isAdmin && setEditingDuration(true)}
+                className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full transition-colors"
+                style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}
+                disabled={!isAdmin}
+              >
+                {project.durationWeeks || "+ duración"}
+              </button>
+            ) : null}
+          </div>
           {project.description && (
             <p className="text-xs text-[--text-muted] truncate">{project.description}</p>
           )}
@@ -328,6 +382,70 @@ function ProjectDetail({ project, isAdmin, onBack }: {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
+        {/* Project dashboard — KPI strip */}
+        {projectCards.length > 0 && (
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div
+              className="rounded-xl p-3 border flex items-center gap-3"
+              style={{ background: "var(--bg-surface)", borderColor: "var(--border)" }}
+            >
+              <ProgressRing pct={completionRate} size={48} stroke={5} color={project.color} />
+              <div className="min-w-0">
+                <p className="text-lg font-bold text-[--text-primary]">{completionRate}%</p>
+                <p className="text-[10px] text-[--text-muted]">
+                  {doneCards.length}/{projectCards.length} tareas
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="rounded-xl p-3 border space-y-1.5"
+              style={{ background: "var(--bg-surface)", borderColor: "var(--border)" }}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[--text-muted]">Horas</p>
+              <p className="text-lg font-bold text-[--text-primary]">
+                {doneHours.toFixed(1)}
+                <span className="text-xs font-normal text-[--text-muted]"> / {totalHours.toFixed(1)}h</span>
+              </p>
+              <ProgressBar
+                pct={totalHours > 0 ? (doneHours / totalHours) * 100 : 0}
+                color={project.color}
+              />
+            </div>
+
+            <div
+              className="rounded-xl p-3 border space-y-1.5"
+              style={{ background: "var(--bg-surface)", borderColor: "var(--border)" }}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[--text-muted]">Checklists</p>
+              <p className="text-lg font-bold text-[--text-primary]">
+                {doneChecklistItems}
+                <span className="text-xs font-normal text-[--text-muted]"> / {checklistItems.length} ítems</span>
+              </p>
+              <ProgressBar
+                pct={checklistItems.length > 0 ? (doneChecklistItems / checklistItems.length) * 100 : 0}
+                color={project.color}
+              />
+            </div>
+
+            <div
+              className="rounded-xl p-3 border space-y-1"
+              style={{ background: "var(--bg-surface)", borderColor: "var(--border)" }}
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-[--text-muted]">Por columna</p>
+              <div className="flex items-center justify-between text-xs text-[--text-secondary]">
+                <span>Por hacer</span><span className="font-semibold text-[--text-primary]">{todoCards.length}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-[--text-secondary]">
+                <span>En progreso</span><span className="font-semibold text-[--text-primary]">{doingCards.length}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-[--text-secondary]">
+                <span>Hecho</span><span className="font-semibold text-[--text-primary]">{doneCards.length}</span>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Members */}
         <section>
           <div className="flex items-center justify-between mb-3">
@@ -433,6 +551,11 @@ function ProjectDetail({ project, isAdmin, onBack }: {
                           {card.dueDate && (
                             <span className="text-[10px] text-[--text-muted] shrink-0">
                               {new Date(card.dueDate).toLocaleDateString("es-CO", { day: "2-digit", month: "short" })}
+                            </span>
+                          )}
+                          {card.estimatedHours !== undefined && (
+                            <span className="text-[10px] font-medium text-[--text-muted] shrink-0">
+                              {card.estimatedHours}h
                             </span>
                           )}
                           <div className="flex -space-x-1.5">
@@ -603,9 +726,19 @@ export function ProjectsView() {
                         <FolderKanban className="h-5 w-5" style={{ color: project.color }} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-semibold text-[--text-primary] truncate">
-                          {project.name}
-                        </h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-[--text-primary] truncate">
+                            {project.name}
+                          </h3>
+                          {project.durationWeeks && (
+                            <span
+                              className="shrink-0 text-[9px] font-medium px-1.5 py-0.5 rounded-full"
+                              style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}
+                            >
+                              {project.durationWeeks}
+                            </span>
+                          )}
+                        </div>
                         {project.description && (
                           <p className="text-xs text-[--text-muted] mt-0.5 line-clamp-2">
                             {project.description}
@@ -669,7 +802,7 @@ export function ProjectsView() {
         {showCreate && (
           <CreateProjectModal
             onClose={() => setShowCreate(false)}
-            onCreate={(name, desc, color) => createProject(name, desc, color)}
+            onCreate={(name, desc, color, duration) => createProject(name, desc, color, duration || undefined)}
           />
         )}
       </AnimatePresence>

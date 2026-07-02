@@ -10,7 +10,8 @@ create table if not exists projects (
   color text,
   created_by text,
   created_at timestamptz not null default now(),
-  members jsonb not null default '[]'::jsonb
+  members jsonb not null default '[]'::jsonb,
+  duration_weeks text
 );
 
 create table if not exists cards (
@@ -29,7 +30,8 @@ create table if not exists cards (
   custom_fields jsonb not null default '[]'::jsonb,
   notes jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  estimated_hours numeric
 );
 
 create index if not exists cards_column_idx on cards ("column");

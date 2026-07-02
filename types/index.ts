@@ -72,6 +72,7 @@ export interface CardType {
   projectId?: string;
   notes?: Note[];
   position?: number;
+  estimatedHours?: number;
 }
 
 export interface Project {
@@ -82,6 +83,7 @@ export interface Project {
   createdBy: string;
   createdAt: string;
   members: ADUser[];
+  durationWeeks?: string;
 }
 
 export type BoardAction =

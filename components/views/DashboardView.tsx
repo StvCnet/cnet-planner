@@ -5,7 +5,10 @@ import React from "react";
 import { isPast, isToday, parseISO } from "date-fns";
 import { TrendingUp, TrendingDown, CheckCircle2, Clock, AlertTriangle, LayoutList } from "lucide-react";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { ProgressRing } from "@/components/ui/progress-ring";
 import { useBoard } from "@/hooks/useBoard";
+import { useProjects } from "@/context/ProjectContext";
 import { ColumnType } from "@/types";
 
 const COLUMN_COLORS: Record<ColumnType, string> = {
@@ -24,6 +27,7 @@ const COLUMN_LABELS: Record<ColumnType, string> = {
 
 export function DashboardView() {
   const { state } = useBoard();
+  const { projects } = useProjects();
   const { cards } = state;
 
   const total = cards.length;
@@ -61,6 +65,12 @@ export function DashboardView() {
   });
   const assigneeList = Array.from(assigneeMap.values()).sort((a, b) => b.count - a.count).slice(0, 6);
 
+  const totalHours = cards.reduce((sum, c) => sum + (c.estimatedHours ?? 0), 0);
+  const doneHours = cards
+    .filter((c) => c.column === "done")
+    .reduce((sum, c) => sum + (c.estimatedHours ?? 0), 0);
+  const hoursPct = totalHours > 0 ? Math.round((doneHours / totalHours) * 100) : 0;
+
   const kpis = [
     {
       label: "Total tareas",
@@ -94,12 +104,28 @@ export function DashboardView() {
       trend: overdue > 0 ? `+${overdue}` : "0",
       up: false,
     },
+    {
+      label: "Horas estimadas",
+      value: `${totalHours.toFixed(1)}h`,
+      icon: Clock,
+      color: "#F59E0B",
+      trend: `${hoursPct}%`,
+      up: true,
+    },
+    {
+      label: "Horas completadas",
+      value: `${doneHours.toFixed(1)}h`,
+      icon: CheckCircle2,
+      color: "#10B981",
+      trend: `${(totalHours - doneHours).toFixed(1)}h rest.`,
+      up: false,
+    },
   ];
 
   return (
     <div className="space-y-6 overflow-y-auto pb-8">
       {/* KPI cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {kpis.map((kpi) => (
           <div key={kpi.label} className="glass rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -150,31 +176,14 @@ export function DashboardView() {
         {/* Completion rate */}
         <div className="glass rounded-xl p-5 flex flex-col items-center justify-center space-y-3">
           <h3 className="text-sm font-semibold text-[--text-primary] self-start">Tasa de completado</h3>
-          <div className="relative flex items-center justify-center">
-            <svg width="120" height="120" viewBox="0 0 120 120">
-              <circle
-                cx="60" cy="60" r="52"
-                fill="none"
-                stroke="var(--bg-hover)"
-                strokeWidth="10"
-              />
-              <circle
-                cx="60" cy="60" r="52"
-                fill="none"
-                stroke="#10B981"
-                strokeWidth="10"
-                strokeLinecap="round"
-                strokeDasharray={`${2 * Math.PI * 52}`}
-                strokeDashoffset={`${2 * Math.PI * 52 * (1 - completionRate / 100)}`}
-                transform="rotate(-90 60 60)"
-                style={{ transition: "stroke-dashoffset 1s ease" }}
-              />
-            </svg>
-            <div className="absolute text-center">
-              <p className="text-2xl font-bold text-[--text-primary]">{completionRate}%</p>
-              <p className="text-[10px] text-[--text-muted]">completado</p>
-            </div>
-          </div>
+          <ProgressRing
+            pct={completionRate}
+            size={120}
+            stroke={10}
+            color="#10B981"
+            label={`${completionRate}%`}
+            sublabel="completado"
+          />
           <p className="text-xs text-[--text-secondary]">
             {done} de {total} tareas
           </p>
@@ -198,14 +207,50 @@ export function DashboardView() {
                 />
                 <span className="flex-1 text-sm text-[--text-primary] truncate">{a.name}</span>
                 <span className="text-sm font-bold text-[--text-secondary] shrink-0">{a.count}</span>
-                <div className="w-24 h-1.5 rounded-full bg-[--bg-hover]">
-                  <div
-                    className="h-full rounded-full bg-[--accent-violet]"
-                    style={{ width: `${(a.count / (assigneeList[0]?.count || 1)) * 100}%` }}
-                  />
-                </div>
+                <ProgressBar
+                  pct={(a.count / (assigneeList[0]?.count || 1)) * 100}
+                  className="w-24"
+                />
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Projects */}
+      <div className="glass rounded-xl p-5 space-y-4">
+        <h3 className="text-sm font-semibold text-[--text-primary]">Proyectos</h3>
+        {projects.length === 0 ? (
+          <p className="text-sm text-[--text-muted]">Sin proyectos aún</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {projects.map((p) => {
+              const pCards = cards.filter((c) => c.projectId === p.id);
+              const pDone = pCards.filter((c) => c.column === "done").length;
+              const pPct = pCards.length > 0 ? Math.round((pDone / pCards.length) * 100) : 0;
+              return (
+                <div
+                  key={p.id}
+                  className="rounded-xl p-3 border space-y-2"
+                  style={{ background: "var(--bg-surface)", borderColor: "var(--border)" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ background: p.color }} />
+                    <span className="text-xs font-semibold text-[--text-primary] truncate flex-1">
+                      {p.name}
+                    </span>
+                    {p.durationWeeks && (
+                      <span className="text-[9px] text-[--text-muted] shrink-0">{p.durationWeeks}</span>
+                    )}
+                  </div>
+                  <ProgressBar pct={pPct} color={p.color} />
+                  <div className="flex justify-between text-[10px] text-[--text-muted]">
+                    <span>{pDone}/{pCards.length} tareas</span>
+                    <span>{pPct}%</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -4,9 +4,9 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Zap, LogOut, Shield } from "lucide-react";
+import { Zap, LogOut, Shield, Sun, Moon } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,12 +14,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useBoard } from "@/hooks/useBoard";
 import { useAD } from "@/hooks/useAD";
 import { useSession } from "next-auth/react";
-import { generateAvatarColor, getInitials } from "@/lib/utils";
+import { useTheme } from "@/context/ThemeContext";
 
 export function Header() {
   const { state, setMyTasksFilter } = useBoard();
   const { currentUser } = useAD();
   const { data: session } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const { myTasksFilter, cards } = state;
   const isAdmin = session?.isAdmin ?? false;
 
@@ -78,18 +79,34 @@ export function Header() {
             </Tooltip>
           </TooltipProvider>
 
+          {/* Theme toggle */}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={toggleTheme}
+                  className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-[--bg-hover] text-[--text-secondary] hover:text-[--text-primary] transition-colors"
+                  aria-label="Cambiar tema"
+                >
+                  {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {theme === "dark" ? "Tema claro" : "Tema oscuro"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
           {/* User avatar */}
           <Popover>
             <PopoverTrigger asChild>
               <button className="flex items-center gap-2 rounded-full hover:bg-[--bg-hover] p-1 pr-2 transition-colors">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback
-                    style={{ backgroundColor: generateAvatarColor(currentUser?.id ?? "u1") }}
-                    className="text-white text-xs font-bold"
-                  >
-                    {currentUser ? getInitials(currentUser.displayName) : "?"}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  userId={currentUser?.id}
+                  name={currentUser?.displayName ?? "?"}
+                  className="h-8 w-8"
+                  fallbackClassName="text-xs font-bold"
+                />
                 <span className="text-sm font-medium text-[--text-primary] hidden sm:block">
                   {currentUser?.displayName.split(" ")[0]}
                 </span>
@@ -98,14 +115,12 @@ export function Header() {
             <PopoverContent className="w-56" align="end">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback
-                      style={{ backgroundColor: generateAvatarColor(currentUser?.id ?? "u1") }}
-                      className="text-white text-sm font-bold"
-                    >
-                      {currentUser ? getInitials(currentUser.displayName) : "?"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    userId={currentUser?.id}
+                    name={currentUser?.displayName ?? "?"}
+                    className="h-10 w-10"
+                    fallbackClassName="text-sm font-bold"
+                  />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-[--text-primary] truncate">
                       {currentUser?.displayName}

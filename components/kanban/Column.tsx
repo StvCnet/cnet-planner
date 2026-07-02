@@ -7,6 +7,7 @@ import { Card } from "@/components/kanban/Card";
 import { AddCard } from "@/components/kanban/AddCard";
 import { DropIndicator } from "@/components/kanban/DropIndicator";
 import { useBoard } from "@/hooks/useBoard";
+import { BoardLayout } from "@/hooks/useBoardLayout";
 import { CardType, ColumnType } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ interface ColumnProps {
   column: ColumnType;
   headingColor: string;
   borderColor: string;
+  layout?: BoardLayout;
 }
 
 const COLUMN_LABEL: Record<ColumnType, string> = {
@@ -56,7 +58,7 @@ function clearHighlights(els?: HTMLElement[]) {
   indicators.forEach((i) => (i.style.opacity = "0"));
 }
 
-export function Column({ title, column, headingColor, borderColor }: ColumnProps) {
+export function Column({ title, column, headingColor, borderColor, layout = "horizontal" }: ColumnProps) {
   const { filteredCards, dispatch } = useBoard();
   const [active, setActive] = useState(false);
   const cards = filteredCards(column);
@@ -94,8 +96,12 @@ export function Column({ title, column, headingColor, borderColor }: ColumnProps
   };
 
   return (
-    // h-full so the column fills the board height; flex-col splits header + scrollable body
-    <div className="flex flex-col w-72 shrink-0 h-full">
+    // Horizontal: fixed width, fills the board height. Vertical: full width, bounded
+    // height so the internal drop zone still scrolls instead of growing the page forever.
+    <div className={cn(
+      "flex flex-col",
+      layout === "vertical" ? "w-full h-[420px]" : "w-72 shrink-0 h-full"
+    )}>
       {/* Column header — fixed height */}
       <div className="flex items-center justify-between mb-2 px-1 shrink-0">
         <h3 className={cn("text-sm font-semibold uppercase tracking-wider", headingColor)}>

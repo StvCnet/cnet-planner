@@ -6,11 +6,11 @@ import { motion } from "framer-motion";
 import { format, isPast, isToday, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { CardModal } from "@/components/kanban/CardModal";
 import { DropIndicator } from "@/components/kanban/DropIndicator";
 import { CardType } from "@/types";
-import { generateAvatarColor, getInitials, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface CardProps {
   card: CardType;
@@ -131,14 +131,13 @@ export function Card({ card, handleDragStart }: CardProps) {
             {card.assignees && card.assignees.length > 0 && (
               <div className="flex -space-x-1.5">
                 {card.assignees.slice(0, 3).map((user) => (
-                  <Avatar key={user.id} className="h-5 w-5 ring-1 ring-[--bg-surface]">
-                    <AvatarFallback
-                      style={{ backgroundColor: generateAvatarColor(user.id) }}
-                      className="text-white text-[8px] font-bold"
-                    >
-                      {getInitials(user.displayName)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    key={user.id}
+                    userId={user.id}
+                    name={user.displayName}
+                    className="h-5 w-5 ring-1 ring-[--bg-surface]"
+                    fallbackClassName="text-[8px] font-bold"
+                  />
                 ))}
                 {card.assignees.length > 3 && (
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[--bg-hover] ring-1 ring-[--bg-surface] text-[8px] text-[--text-muted]">

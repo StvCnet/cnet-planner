@@ -56,7 +56,7 @@ export function CalendarView() {
   const weekDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
   return (
-    <div className="flex gap-4 h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row gap-4 h-full overflow-y-auto md:overflow-hidden">
       {/* Calendar grid */}
       <div className="flex-1 min-w-0">
         {/* Navigation */}
@@ -93,92 +93,97 @@ export function CalendarView() {
           </div>
         </div>
 
-        {/* Day headers */}
-        <div className="grid grid-cols-7 mb-2">
-          {weekDays.map((d) => (
-            <div key={d} className="text-center text-xs font-medium text-[--text-muted] py-2">
-              {d}
-            </div>
-          ))}
-        </div>
-
-        {/* Day cells */}
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((day) => {
-            const dayCards = getCardsForDay(day);
-            const dayEvents = getOutlookForDay(day);
-            const inMonth = isSameMonth(day, currentMonth);
-            const today = isToday(day);
-
-            return (
-              <div
-                key={day.toISOString()}
-                className={cn(
-                  "min-h-[90px] rounded-lg p-1.5 border transition-colors",
-                  inMonth ? "border-[--border] bg-[--bg-surface]" : "border-transparent bg-transparent",
-                  today && "border-[--accent-violet] ring-1 ring-[--accent-violet]/30"
-                )}
-              >
-                <span
-                  className={cn(
-                    "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs mb-1",
-                    today ? "bg-[--accent-violet] text-white font-bold" : "",
-                    !today && inMonth ? "text-[--text-primary]" : "text-[--text-muted]"
-                  )}
-                >
-                  {format(day, "d")}
-                </span>
-
-                <div className="flex flex-col gap-0.5">
-                  {/* Kanban tasks */}
-                  {dayCards.slice(0, 2).map((card) => (
-                    <button
-                      key={card.id}
-                      onClick={() => setSelectedCard(card)}
-                      className="flex items-center gap-1 w-full text-left group"
-                    >
-                      <span
-                        className="h-1.5 w-1.5 rounded-full shrink-0 bg-[--accent-emerald]"
-                      />
-                      <span className="text-[10px] text-[--text-secondary] group-hover:text-[--text-primary] truncate transition-colors">
-                        {card.title}
-                      </span>
-                    </button>
-                  ))}
-
-                  {/* Outlook events */}
-                  {dayEvents.slice(0, 2).map((ev) => (
-                    <a
-                      key={ev.id}
-                      href={ev.webLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 w-full text-left group"
-                    >
-                      <span
-                        className="h-1.5 w-1.5 rounded-full shrink-0 border"
-                        style={{ borderColor: "var(--accent-violet)", backgroundColor: "transparent" }}
-                      />
-                      <span className="text-[10px] text-[--accent-violet]/70 group-hover:text-[--accent-violet] truncate transition-colors">
-                        {ev.subject}
-                      </span>
-                    </a>
-                  ))}
-
-                  {(dayCards.length + dayEvents.length) > 4 && (
-                    <span className="text-[10px] text-[--text-muted] pl-2.5">
-                      +{dayCards.length + dayEvents.length - 4} más
-                    </span>
-                  )}
+        {/* Grid scrolls horizontally on narrow screens instead of squeezing 7 columns unreadably thin */}
+        <div className="overflow-x-auto">
+          <div className="min-w-[640px]">
+            {/* Day headers */}
+            <div className="grid grid-cols-7 mb-2">
+              {weekDays.map((d) => (
+                <div key={d} className="text-center text-xs font-medium text-[--text-muted] py-2">
+                  {d}
                 </div>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+
+            {/* Day cells */}
+            <div className="grid grid-cols-7 gap-1">
+              {days.map((day) => {
+                const dayCards = getCardsForDay(day);
+                const dayEvents = getOutlookForDay(day);
+                const inMonth = isSameMonth(day, currentMonth);
+                const today = isToday(day);
+
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={cn(
+                      "min-h-[70px] sm:min-h-[90px] rounded-lg p-1.5 border transition-colors",
+                      inMonth ? "border-[--border] bg-[--bg-surface]" : "border-transparent bg-transparent",
+                      today && "border-[--accent-violet] ring-1 ring-[--accent-violet]/30"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "inline-flex h-7 w-7 items-center justify-center rounded-full text-xs mb-1",
+                        today ? "bg-[--accent-violet] text-white font-bold" : "",
+                        !today && inMonth ? "text-[--text-primary]" : "text-[--text-muted]"
+                      )}
+                    >
+                      {format(day, "d")}
+                    </span>
+
+                    <div className="flex flex-col gap-0.5">
+                      {/* Kanban tasks */}
+                      {dayCards.slice(0, 2).map((card) => (
+                        <button
+                          key={card.id}
+                          onClick={() => setSelectedCard(card)}
+                          className="flex items-center gap-1 w-full text-left group"
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full shrink-0 bg-[--accent-emerald]"
+                          />
+                          <span className="text-[10px] text-[--text-secondary] group-hover:text-[--text-primary] truncate transition-colors">
+                            {card.title}
+                          </span>
+                        </button>
+                      ))}
+
+                      {/* Outlook events */}
+                      {dayEvents.slice(0, 2).map((ev) => (
+                        <a
+                          key={ev.id}
+                          href={ev.webLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 w-full text-left group"
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full shrink-0 border"
+                            style={{ borderColor: "var(--accent-violet)", backgroundColor: "transparent" }}
+                          />
+                          <span className="text-[10px] text-[--accent-violet]/70 group-hover:text-[--accent-violet] truncate transition-colors">
+                            {ev.subject}
+                          </span>
+                        </a>
+                      ))}
+
+                      {(dayCards.length + dayEvents.length) > 4 && (
+                        <span className="text-[10px] text-[--text-muted] pl-2.5">
+                          +{dayCards.length + dayEvents.length - 4} más
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Sidebar */}
-      <div className="w-52 shrink-0 flex flex-col gap-3 overflow-y-auto">
+      <div className="w-full md:w-52 shrink-0 flex flex-col gap-3 md:overflow-y-auto">
         {/* Tasks without date */}
         <div className="glass rounded-xl p-3">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[--text-secondary] mb-3">

@@ -4,9 +4,8 @@
 import React from "react";
 import { isPast, isToday, parseISO } from "date-fns";
 import { TrendingUp, TrendingDown, CheckCircle2, Clock, AlertTriangle, LayoutList } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useBoard } from "@/hooks/useBoard";
-import { generateAvatarColor, getInitials } from "@/lib/utils";
 import { ColumnType } from "@/types";
 
 const COLUMN_COLORS: Record<ColumnType, string> = {
@@ -191,14 +190,12 @@ export function DashboardView() {
           <div className="space-y-2">
             {assigneeList.map((a) => (
               <div key={a.id} className="flex items-center gap-3">
-                <Avatar className="h-7 w-7 shrink-0">
-                  <AvatarFallback
-                    style={{ backgroundColor: generateAvatarColor(a.id) }}
-                    className="text-white text-[10px] font-semibold"
-                  >
-                    {getInitials(a.name)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  userId={a.id}
+                  name={a.name}
+                  className="h-7 w-7 shrink-0"
+                  fallbackClassName="text-[10px] font-semibold"
+                />
                 <span className="flex-1 text-sm text-[--text-primary] truncate">{a.name}</span>
                 <span className="text-sm font-bold text-[--text-secondary] shrink-0">{a.count}</span>
                 <div className="w-24 h-1.5 rounded-full bg-[--bg-hover]">

@@ -54,7 +54,7 @@ export function ViewSwitcher() {
           )}
           {activeView === "calendar" && (
             <motion.div key="calendar" variants={slideVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }} className="h-full">
-              <div className="h-full px-4 py-2 overflow-hidden"><CalendarView /></div>
+              <div className="h-full px-4 py-2"><CalendarView /></div>
             </motion.div>
           )}
           {activeView === "dashboard" && (

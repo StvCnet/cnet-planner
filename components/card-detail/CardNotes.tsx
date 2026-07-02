@@ -4,6 +4,7 @@ import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Check } from "lucide-react";
 import { useAD } from "@/hooks/useAD";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Note } from "@/types";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -29,10 +30,6 @@ function noteRotation(id: string): number {
   const n = parseInt(id.replace(/\D/g, "").slice(-4) || "0", 10);
   const steps = [-1.2, 0.8, -0.4, 1.5, -0.9, 0.3, -1.5, 1.0];
   return steps[n % steps.length];
-}
-
-function getInitials(name: string) {
-  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
 /* ── Single sticky note ────────────────────────────────────────────────────── */
@@ -76,13 +73,14 @@ function StickyNote({
     >
       {/* Top sticky strip */}
       <div className="h-7 w-full rounded-t-sm flex items-center px-2 justify-between" style={{ background: c.strip }}>
-        <div
-          className="h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-          style={{ background: c.text }}
+        <UserAvatar
+          userId={note.authorId}
+          name={note.authorName}
           title={note.authorName}
-        >
-          {getInitials(note.authorName)}
-        </div>
+          className="h-5 w-5 shrink-0"
+          fallbackClassName="text-[9px] font-bold"
+          fallbackBackground={c.text}
+        />
         {isOwn && (
           <button
             onClick={onDelete}

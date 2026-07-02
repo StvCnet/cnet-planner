@@ -10,7 +10,7 @@ import { useSession } from "next-auth/react";
 import { useProjects } from "@/context/ProjectContext";
 import { useAD } from "@/hooks/useAD";
 import { Project, ADUser, CardType } from "@/types";
-import { generateAvatarColor, getInitials } from "@/lib/utils";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { useBoard } from "@/hooks/useBoard";
 
 const PROJECT_COLORS = [
@@ -251,12 +251,12 @@ function AddMemberSearch({ project, onAdd, onClose }: {
               onClick={() => { onAdd(user); setQuery(""); setResults([]); }}
               className="flex items-center gap-3 w-full rounded-lg px-3 py-2 hover:bg-[--bg-hover] transition-colors text-left"
             >
-              <div
-                className="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                style={{ backgroundColor: generateAvatarColor(user.id) }}
-              >
-                {getInitials(user.displayName)}
-              </div>
+              <UserAvatar
+                userId={user.id}
+                name={user.displayName}
+                className="h-8 w-8 shrink-0"
+                fallbackClassName="text-xs font-bold"
+              />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-[--text-primary] truncate">{user.displayName}</p>
                 <p className="text-xs text-[--text-muted] truncate">{user.title || user.department}</p>
@@ -354,12 +354,12 @@ function ProjectDetail({ project, isAdmin, onBack }: {
                 className="flex items-center gap-2 rounded-xl px-3 py-2 border"
                 style={{ background: "var(--bg-surface)", borderColor: "var(--border)" }}
               >
-                <div
-                  className="h-7 w-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                  style={{ backgroundColor: generateAvatarColor(member.id) }}
-                >
-                  {getInitials(member.displayName)}
-                </div>
+                <UserAvatar
+                  userId={member.id}
+                  name={member.displayName}
+                  className="h-7 w-7 shrink-0"
+                  fallbackClassName="text-xs font-bold"
+                />
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-[--text-primary] truncate max-w-[120px]">
                     {member.displayName}
@@ -437,14 +437,14 @@ function ProjectDetail({ project, isAdmin, onBack }: {
                           )}
                           <div className="flex -space-x-1.5">
                             {card.assignees?.slice(0, 3).map((a) => (
-                              <div
+                              <UserAvatar
                                 key={a.id}
+                                userId={a.id}
+                                name={a.displayName}
                                 title={a.displayName}
-                                className="h-5 w-5 rounded-full border-2 flex items-center justify-center text-white text-[8px] font-bold"
-                                style={{ backgroundColor: generateAvatarColor(a.id), borderColor: "var(--bg-surface)" }}
-                              >
-                                {getInitials(a.displayName)}
-                              </div>
+                                className="h-5 w-5 border-2 border-[--bg-surface]"
+                                fallbackClassName="text-[8px] font-bold"
+                              />
                             ))}
                           </div>
                         </div>
@@ -632,17 +632,14 @@ export function ProjectsView() {
                     <div className="flex items-center justify-between mt-4">
                       <div className="flex -space-x-2">
                         {project.members.slice(0, 5).map((m) => (
-                          <div
+                          <UserAvatar
                             key={m.id}
+                            userId={m.id}
+                            name={m.displayName}
                             title={m.displayName}
-                            className="h-6 w-6 rounded-full border-2 flex items-center justify-center text-white text-[9px] font-bold"
-                            style={{
-                              backgroundColor: generateAvatarColor(m.id),
-                              borderColor: "var(--bg-elevated)",
-                            }}
-                          >
-                            {getInitials(m.displayName)}
-                          </div>
+                            className="h-6 w-6 border-2 border-[--bg-elevated]"
+                            fallbackClassName="text-[9px] font-bold"
+                          />
                         ))}
                         {project.members.length > 5 && (
                           <div

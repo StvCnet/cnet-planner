@@ -55,6 +55,59 @@
   --radius: 0.5rem;
 }
 
+/* Dark mode — same variable names as :root, values taken from the dark palette
+   already present in tailwind.config.ts (theme.extend.colors), which was defined
+   but never wired up to an actual .dark selector until now. */
+.dark {
+  --bg-base:     #060d18;
+  --bg-surface:  #0b1220;
+  --bg-elevated: #111b2e;
+  --bg-hover:    #172036;
+
+  --border:        #1d2d44;
+  --border-focus:  #073c81;
+
+  --text-primary:   #e9ecee;
+  --text-secondary: #8a9bb5;
+  --text-muted:     #445270;
+
+  --accent-violet:        #073c81;
+  --accent-violet-bright: #1a52b0;
+  --accent-gradient:      linear-gradient(135deg, #073c81, #7b8d1c);
+  --accent-emerald: #7b8d1c;
+  --accent-yellow:  #8a9d00;
+  --accent-blue:    #073c81;
+  --accent-red:     #dc2626;
+
+  --glass-bg:     rgba(17, 27, 46, 0.72);
+  --glass-border: rgba(7, 60, 129, 0.25);
+
+  /* shadcn/ui HSL bridge */
+  --background: 222 47% 6%;
+  --foreground: 210 20% 92%;
+  --card: 222 39% 10%;
+  --card-foreground: 210 20% 92%;
+  --popover: 222 39% 10%;
+  --popover-foreground: 210 20% 92%;
+  --primary: 220 88% 27%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 222 30% 16%;
+  --secondary-foreground: 210 20% 92%;
+  --muted: 222 30% 16%;
+  --muted-foreground: 217 24% 55%;
+  --accent: 222 30% 16%;
+  --accent-foreground: 210 20% 92%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  /* --border redeclared here (HSL) mirrors the same last-write-wins pattern as
+     :root above — not fixed here to avoid an unrelated visual regression. */
+  --border: 213 30% 20%;
+  --input: 213 30% 20%;
+  --ring: 220 88% 27%;
+
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
